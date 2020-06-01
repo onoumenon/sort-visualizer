@@ -23,7 +23,7 @@ function doMerge(
   let i = startIndex;
   let j = middleIndex + 1;
   while (i <= middleIndex && j <= endIndex) {
-    addComparingAnimation(animations, i, j);
+    addColorFlashAnimation(animations, [i, j]);
     if (auxiliaryArray[i] <= auxiliaryArray[j]) {
       animations.push([{ index: k, newHeight: auxiliaryArray[i] }]);
       mainArray[k++] = auxiliaryArray[i++];
@@ -33,12 +33,12 @@ function doMerge(
     }
   }
   while (i <= middleIndex) {
-    addComparingAnimation(animations, i, i);
+    addColorFlashAnimation(animations, [i]);
     animations.push([{ index: k, newHeight: auxiliaryArray[i] }]);
     mainArray[k++] = auxiliaryArray[i++];
   }
   while (j <= endIndex) {
-    addComparingAnimation(animations, j, j);
+    addColorFlashAnimation(animations, [j]);
     animations.push([{ index: k, newHeight: auxiliaryArray[j] }]);
     mainArray[k++] = auxiliaryArray[j++];
   }
@@ -95,7 +95,7 @@ function bubbleSortHelper(array, animations) {
       } else {
         addAnimations(array, animations, i, i + 1);
       }
-      // display value at final position in another color
+      // 'end' state displays value at final position in green
       if (i === array.length - index - 2) {
         animations.push({ id: 'colorChange', data: [i + 1], state: 'end' });
       }
@@ -152,10 +152,12 @@ function heapSortHelper(array, animations) {
     for (let i = arrLength - 1; i > 0; i--) {
       addAnimations(arr, animations, 0, i, true);
       [arr[0], arr[i]] = [arr[i], arr[0]];
+      animations.push({ id: 'colorChange', data: [i], state: 'end' });
       arrLength--;
-
       heapify(arr, 0);
     }
+    // change the end state of final sorted bar manually
+    animations.push({ id: 'colorChange', data: [0], state: 'end' });
   }
   heapSort(array);
 }
@@ -206,16 +208,17 @@ function quickSortHelper(array, animations) {
     }
     addAnimations(arr, animations, pIndex, endIndex, true);
     [arr[pIndex], arr[endIndex]] = [arr[endIndex], arr[pIndex]];
+    animations.push({ id: 'colorChange', data: [pIndex], state: 'end' });
     return pIndex;
   }
   quickSort(array);
 }
 
-function addComparingAnimation(animations, a, b) {
+function addColorFlashAnimation(animations, [arrOfIndices], state = 'active') {
   // first array is to indicate color change
-  animations.push({ id: 'colorChange', data: [a, b], state: 'active' });
+  animations.push({ id: 'colorChange', data: [arrOfIndices], state });
   // second array to indicate reverting to original color
-  animations.push({ id: 'colorChange', data: [a, b], state: 'active' });
+  animations.push({ id: 'colorChange', data: [arrOfIndices], state });
 }
 
 // add animation frames for compared value
@@ -227,7 +230,7 @@ function addAnimations(
   defaultSwap = false,
   customSwapValue = []
 ) {
-  addComparingAnimation(animations, a, b);
+  addColorFlashAnimation(animations, [a, b]);
   // If no flags are passed in, an 'empty' animation frame is added
   if (defaultSwap) {
     animations.push([

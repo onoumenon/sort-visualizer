@@ -63,7 +63,7 @@ export default class SortingVisualizer extends Component {
     const activeBars = document.getElementsByClassName('array-bar');
     if (activeBars.length) {
       for (let i = 0; i < activeBars.length; i++) {
-        activeBars[i].classList.remove('--active', '--end');
+        activeBars[i].classList.remove('--active', '--end', '--secondary');
       }
     }
     const array = [];
