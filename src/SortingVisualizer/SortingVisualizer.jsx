@@ -9,7 +9,14 @@ import {
   getQuickSortAnimations,
 } from './HelperFunctions';
 
+// animation frames are set as timeouts
 let TIMEOUTS = [];
+const DEFAULT_NO_OF_ARRAY_BARS = 10;
+// in MS
+const SLOWSPEED = 200;
+const FASTSPEED = 20;
+// in px
+const MOBILE_BREAKPOINT = 400;
 
 export default class SortingVisualizer extends Component {
   constructor(props) {
@@ -17,8 +24,9 @@ export default class SortingVisualizer extends Component {
     this.state = {
       windowWidth: 0,
       array: [],
-      numberOfArrayBars: 10,
-      animationSpeedMS: 400,
+      numberOfArrayBars: DEFAULT_NO_OF_ARRAY_BARS,
+      animationSpeedMS: SLOWSPEED,
+      isAnimating: false,
     };
     this.updateWindowDimensions = this.updateWindowDimensions.bind(this);
   }
@@ -62,12 +70,14 @@ export default class SortingVisualizer extends Component {
     for (let index = 0; index < this.state.numberOfArrayBars; index += 1) {
       array.push(getRandomIntFromRange(5, 500));
     }
-    this.setState({ array });
+    this.setState({ array, isAnimating: false });
   }
 
   playSortAnimation(getAnimationFrames) {
     // param getAnimationFrames is a helper function to be passed in, eg: getBubbleSortAnimations
     const { array, animationSpeedMS } = this.state;
+    // track start and end of animation
+    this.setState({ isAnimating: true });
     const animations = getAnimationFrames(array);
     animations.forEach((ele, i) => {
       const arrayBars = document.getElementsByClassName('array-bar');
@@ -96,15 +106,22 @@ export default class SortingVisualizer extends Component {
           }, i * animationSpeedMS)
         );
       }
+      if (i === animations.length - 1) {
+        TIMEOUTS.push(
+          setTimeout(() => {
+            this.setState({ isAnimating: false });
+          }, (i + 1) * animationSpeedMS)
+        );
+      }
     });
   }
 
   render() {
-    const { array, windowWidth } = this.state;
+    const { array, windowWidth, isAnimating } = this.state;
     return (
       <div className="page-container">
         <div className="toolbar">
-          <ButtonGroup vertical={windowWidth < 400}>
+          <ButtonGroup vertical={windowWidth < MOBILE_BREAKPOINT}>
             <Button
               onClick={() => {
                 this.resetArray();
@@ -146,6 +163,7 @@ export default class SortingVisualizer extends Component {
             </Button>
 
             <DropdownButton
+              disabled={isAnimating}
               as={ButtonGroup}
               title="ANIMATION SPEED"
               id="bg-nested-dropdown"
@@ -153,8 +171,8 @@ export default class SortingVisualizer extends Component {
               <Dropdown.Item
                 onClick={() => {
                   this.setState({
-                    numberOfArrayBars: 10,
-                    animationSpeedMS: 400,
+                    numberOfArrayBars: DEFAULT_NO_OF_ARRAY_BARS,
+                    animationSpeedMS: SLOWSPEED,
                   });
                 }}
               >
@@ -163,8 +181,8 @@ export default class SortingVisualizer extends Component {
               <Dropdown.Item
                 onClick={() => {
                   this.setState({
-                    numberOfArrayBars: windowWidth / 10,
-                    animationSpeedMS: 20,
+                    numberOfArrayBars: windowWidth / DEFAULT_NO_OF_ARRAY_BARS,
+                    animationSpeedMS: FASTSPEED,
                   });
                 }}
               >
@@ -177,7 +195,6 @@ export default class SortingVisualizer extends Component {
           {array.map((value, index) => (
             <div
               className="array-bar"
-              // eslint-disable-next-line react/no-array-index-key
               key={index}
               id={`array-bar${index}`}
               style={{
