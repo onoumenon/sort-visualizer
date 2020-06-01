@@ -23,7 +23,7 @@ function doMerge(
   let i = startIndex;
   let j = middleIndex + 1;
   while (i <= middleIndex && j <= endIndex) {
-    pushComparedValuesIndex(animations, i, j);
+    addComparingAnimation(animations, i, j);
     if (auxiliaryArray[i] <= auxiliaryArray[j]) {
       animations.push([{ index: k, newHeight: auxiliaryArray[i] }]);
       mainArray[k++] = auxiliaryArray[i++];
@@ -33,12 +33,12 @@ function doMerge(
     }
   }
   while (i <= middleIndex) {
-    pushComparedValuesIndex(animations, i, i);
+    addComparingAnimation(animations, i, i);
     animations.push([{ index: k, newHeight: auxiliaryArray[i] }]);
     mainArray[k++] = auxiliaryArray[i++];
   }
   while (j <= endIndex) {
-    pushComparedValuesIndex(animations, j, j);
+    addComparingAnimation(animations, j, j);
     animations.push([{ index: k, newHeight: auxiliaryArray[j] }]);
     mainArray[k++] = auxiliaryArray[j++];
   }
@@ -84,22 +84,16 @@ export function getBubbleSortAnimations(array) {
   return animations;
 }
 
-function bubbleSortHelper(arr, animations) {
-  const array = arr.slice();
+function bubbleSortHelper(array, animations) {
   for (let index = 0; index <= array.length - 1; index++) {
     let hasSwapped = false;
     for (let i = 0; i < array.length - index - 1; i++) {
-      pushComparedValuesIndex(animations, i, i + 1);
       if (array[i] > array[i + 1]) {
-        // swaps the values if first value is bigger
-        animations.push([
-          { index: i, newHeight: array[i + 1] },
-          { index: i + 1, newHeight: array[i] },
-        ]);
+        addAnimations(array, animations, i, i + 1, true);
         [array[i], array[i + 1]] = [array[i + 1], array[i]];
         hasSwapped = true;
       } else {
-        animations.push([]);
+        addAnimations(array, animations, i, i + 1);
       }
     }
     if (hasSwapped === false) {
@@ -107,7 +101,6 @@ function bubbleSortHelper(arr, animations) {
       break;
     }
   }
-  return array;
 }
 
 export function getHeapSortAnimations(array) {
@@ -117,60 +110,116 @@ export function getHeapSortAnimations(array) {
   return animations;
 }
 
-function heapSortHelper(arr, animations) {
+function heapSortHelper(array, animations) {
   let arrLength;
 
   // AKA max-heapify
-  function heapify(input, i) {
+  function heapify(arr, i) {
     // treat array as heap
-    let leftChild = 2 * i + 1;
-    let rightChild = 2 * i + 2;
+    const leftChild = 2 * i + 1;
+    const rightChild = 2 * i + 2;
     let maxIndex = i;
 
-    if (leftChild < arrLength && input[leftChild] > input[maxIndex]) {
+    if (leftChild < arrLength && arr[leftChild] > arr[maxIndex]) {
       maxIndex = leftChild;
     }
-    if (rightChild < arrLength && input[rightChild] > input[maxIndex]) {
+    if (rightChild < arrLength && arr[rightChild] > arr[maxIndex]) {
       maxIndex = rightChild;
     }
     if (maxIndex !== i) {
-      pushComparedValuesIndex(animations, maxIndex, i);
-      animations.push([
-        { index: i, newHeight: input[maxIndex] },
-        { index: maxIndex, newHeight: input[i] },
-      ]);
-      [input[i], input[maxIndex]] = [input[maxIndex], input[i]];
-      heapify(input, maxIndex);
+      addAnimations(arr, animations, maxIndex, i, true);
+      [arr[i], arr[maxIndex]] = [arr[maxIndex], arr[i]];
+      heapify(arr, maxIndex);
     }
   }
 
-  function heapSort(input) {
-    arrLength = input.length;
+  function heapSort(arr) {
+    arrLength = arr.length;
 
     // build a max heap from bottom-up, which only needs to run arrLength/2 because leaves are already max heaps
     for (let i = Math.floor(arrLength / 2); i >= 0; i -= 1) {
-      heapify(input, i);
+      heapify(arr, i);
     }
 
     // iteratively get largest value to the 'sorted' portion of array
     for (let i = arrLength - 1; i > 0; i--) {
-      pushComparedValuesIndex(animations, 0, i);
-      animations.push([
-        { index: 0, newHeight: input[i] },
-        { index: i, newHeight: input[0] },
-      ]);
-      [input[0], input[i]] = [input[i], input[0]];
+      addAnimations(arr, animations, 0, i, true);
+      [arr[0], arr[i]] = [arr[i], arr[0]];
       arrLength--;
 
-      heapify(input, 0);
+      heapify(arr, 0);
     }
   }
-  heapSort(arr);
+  heapSort(array);
 }
 
-function pushComparedValuesIndex(animations, a, b) {
+export function getQuickSortAnimations(array) {
+  const animations = [];
+  if (array.length <= 1) return array;
+  quickSortHelper(array, animations);
+  return animations;
+}
+
+function quickSortHelper(array, animations) {
+  function quickSort(arr, startIndex = 0, endIndex = arr.length - 1) {
+    if (startIndex < endIndex) {
+      const pIndex = quickSortPartition(arr, startIndex, endIndex);
+      quickSort(arr, startIndex, pIndex - 1);
+      quickSort(arr, pIndex + 1, endIndex);
+    }
+    return arr;
+  }
+
+  function quickSortPartition(arr, startIndex, endIndex) {
+    // pick the pivot using median of 3 method
+    const midIndex = Math.floor((startIndex + endIndex) / 2);
+    if (arr[midIndex] < arr[startIndex]) {
+      addAnimations(arr, animations, midIndex, startIndex, true);
+      [arr[midIndex], arr[startIndex]] = [arr[startIndex], arr[midIndex]];
+    }
+    if (arr[endIndex] < arr[startIndex]) {
+      addAnimations(arr, animations, endIndex, startIndex, true);
+      [arr[endIndex], arr[startIndex]] = [arr[startIndex], arr[endIndex]];
+    }
+    if (arr[midIndex] < arr[endIndex]) {
+      addAnimations(arr, animations, midIndex, endIndex, true);
+      [arr[midIndex], arr[endIndex]] = [arr[endIndex], arr[midIndex]];
+    }
+    const pivot = arr[endIndex];
+    // pIndex ends at the pivot's correct position
+    let pIndex = startIndex;
+    for (let index = startIndex; index < endIndex; index++) {
+      if (arr[index] <= pivot) {
+        addAnimations(arr, animations, index, pIndex, true);
+        [arr[index], arr[pIndex]] = [arr[pIndex], arr[index]];
+        pIndex += 1;
+      } else {
+        addAnimations(arr, animations, index, pIndex);
+      }
+    }
+    addAnimations(arr, animations, pIndex, endIndex, true);
+    [arr[pIndex], arr[endIndex]] = [arr[endIndex], arr[pIndex]];
+    return pIndex;
+  }
+  quickSort(array);
+}
+
+function addComparingAnimation(animations, a, b) {
   // first array is to indicate color change
   animations.push([a, b]);
   // second array to indicate reverting to original color
   animations.push([a, b]);
+}
+
+// add animation frames for compared value
+function addAnimations(arr, animations, a, b, isSwapping = false) {
+  addComparingAnimation(animations, a, b);
+  if (isSwapping) {
+    animations.push([
+      { index: a, newHeight: arr[b] },
+      { index: b, newHeight: arr[a] },
+    ]);
+  } else {
+    animations.push([]);
+  }
 }

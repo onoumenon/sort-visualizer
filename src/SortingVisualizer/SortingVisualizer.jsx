@@ -5,10 +5,11 @@ import {
   getMergeSortAnimations,
   getBubbleSortAnimations,
   getHeapSortAnimations,
+  getQuickSortAnimations,
 } from './HelperFunctions';
 
-const ANIMATION_SPEED_MS = 80;
-const NUMBER_OF_ARRAY_BARS = 40;
+const ANIMATION_SPEED_MS = 10;
+const NUMBER_OF_ARRAY_BARS = 100;
 let TIMEOUTS = [];
 
 export default class SortingVisualizer extends Component {
@@ -23,37 +24,31 @@ export default class SortingVisualizer extends Component {
     this.resetArray();
   }
 
+  playAnimation(type) {
+    this.resetArray();
+    setTimeout(() => {
+      this.playSortAnimation(type);
+    }, 100);
+  }
+
   resetArray() {
-    // const activeBars = document.getElementsByClassName('array-bar active');
-    // if (activeBars.length) {
-    //   for (let i = 0; i < activeBars.length; i++) {
-    //     activeBars[i].classList.remove('active');
-    //   }
-    // }
-
     // stop playing animation frames
-    // TIMEOUTS.forEach((timeout) => {
-    //   clearTimeout(timeout);
-    // });
-    // TIMEOUTS = [];
+    TIMEOUTS.forEach((timeout) => {
+      clearTimeout(timeout);
+    });
+    TIMEOUTS = [];
 
+    const activeBars = document.getElementsByClassName('array-bar');
+    if (activeBars.length) {
+      for (let i = 0; i < activeBars.length; i++) {
+        activeBars[i].classList.remove('active');
+      }
+    }
     const array = [];
     for (let index = 0; index < NUMBER_OF_ARRAY_BARS; index += 1) {
       array.push(getRandomIntFromRange(5, 500));
     }
     this.setState({ array });
-  }
-
-  mergeSort() {
-    this.playSortAnimation(getMergeSortAnimations);
-  }
-
-  bubbleSort() {
-    this.playSortAnimation(getBubbleSortAnimations);
-  }
-
-  heapSort() {
-    this.playSortAnimation(getHeapSortAnimations);
   }
 
   playSortAnimation(getAnimationFrames) {
@@ -83,7 +78,6 @@ export default class SortingVisualizer extends Component {
               const { index, newHeight } = change;
               const barStyle = arrayBars[index].style;
               barStyle.height = `${newHeight}px`;
-              arrayBars[index].innerHTML = newHeight;
             });
           }, i * ANIMATION_SPEED_MS)
         );
@@ -109,7 +103,7 @@ export default class SortingVisualizer extends Component {
             type="button"
             className="rounded-button"
             onClick={() => {
-              this.mergeSort();
+              this.playAnimation(getMergeSortAnimations);
             }}
           >
             Merge Sort
@@ -118,7 +112,7 @@ export default class SortingVisualizer extends Component {
             type="button"
             className="rounded-button"
             onClick={() => {
-              this.resetArray();
+              this.playAnimation(getQuickSortAnimations);
             }}
           >
             Quick Sort
@@ -127,7 +121,7 @@ export default class SortingVisualizer extends Component {
             type="button"
             className="rounded-button"
             onClick={() => {
-              this.heapSort();
+              this.playAnimation(getHeapSortAnimations);
             }}
           >
             Heap Sort
@@ -136,7 +130,7 @@ export default class SortingVisualizer extends Component {
             type="button"
             className="rounded-button"
             onClick={() => {
-              this.bubbleSort();
+              this.playAnimation(getBubbleSortAnimations);
             }}
           >
             Bubble Sort
@@ -150,9 +144,7 @@ export default class SortingVisualizer extends Component {
               key={index}
               id={`array-bar${index}`}
               style={{ height: `${value}px` }}
-            >
-              {value}
-            </div>
+            />
           ))}
         </div>
       </div>
