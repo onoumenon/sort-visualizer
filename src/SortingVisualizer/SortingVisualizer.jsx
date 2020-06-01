@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
-import './SortingVisualizer.css';
+import { Dropdown, Button, ButtonGroup, DropdownButton } from 'react-bootstrap';
+import './SortingVisualizer.scss';
 import {
   getRandomIntFromRange,
   getMergeSortAnimations,
@@ -8,27 +9,40 @@ import {
   getQuickSortAnimations,
 } from './HelperFunctions';
 
-const ANIMATION_SPEED_MS = 10;
-const NUMBER_OF_ARRAY_BARS = 100;
 let TIMEOUTS = [];
 
 export default class SortingVisualizer extends Component {
   constructor(props) {
     super(props);
     this.state = {
+      windowWidth: 0,
       array: [],
+      numberOfArrayBars: 10,
+      animationSpeedMS: 400,
     };
+    this.updateWindowDimensions = this.updateWindowDimensions.bind(this);
   }
 
   componentDidMount() {
+    this.updateWindowDimensions();
+    window.addEventListener('resize', this.updateWindowDimensions);
     this.resetArray();
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('resize', this.updateWindowDimensions);
+  }
+
+  updateWindowDimensions() {
+    this.setState({ windowWidth: window.innerWidth });
   }
 
   playAnimation(type) {
     this.resetArray();
+    // wait for previous timeouts to clear first
     setTimeout(() => {
       this.playSortAnimation(type);
-    }, 100);
+    }, 0);
   }
 
   resetArray() {
@@ -41,11 +55,11 @@ export default class SortingVisualizer extends Component {
     const activeBars = document.getElementsByClassName('array-bar');
     if (activeBars.length) {
       for (let i = 0; i < activeBars.length; i++) {
-        activeBars[i].classList.remove('active');
+        activeBars[i].classList.remove('--active');
       }
     }
     const array = [];
-    for (let index = 0; index < NUMBER_OF_ARRAY_BARS; index += 1) {
+    for (let index = 0; index < this.state.numberOfArrayBars; index += 1) {
       array.push(getRandomIntFromRange(5, 500));
     }
     this.setState({ array });
@@ -53,7 +67,7 @@ export default class SortingVisualizer extends Component {
 
   playSortAnimation(getAnimationFrames) {
     // param getAnimationFrames is a helper function to be passed in, eg: getBubbleSortAnimations
-    const { array } = this.state;
+    const { array, animationSpeedMS } = this.state;
     const animations = getAnimationFrames(array);
     animations.forEach((ele, i) => {
       const arrayBars = document.getElementsByClassName('array-bar');
@@ -64,9 +78,9 @@ export default class SortingVisualizer extends Component {
 
         TIMEOUTS.push(
           setTimeout(() => {
-            arrayBars[barOneIdx].classList.toggle('active');
-            arrayBars[barTwoIdx].classList.toggle('active');
-          }, i * ANIMATION_SPEED_MS)
+            arrayBars[barOneIdx].classList.toggle('--active');
+            arrayBars[barTwoIdx].classList.toggle('--active');
+          }, i * animationSpeedMS)
         );
       } else {
         TIMEOUTS.push(
@@ -79,62 +93,85 @@ export default class SortingVisualizer extends Component {
               const barStyle = arrayBars[index].style;
               barStyle.height = `${newHeight}px`;
             });
-          }, i * ANIMATION_SPEED_MS)
+          }, i * animationSpeedMS)
         );
       }
     });
   }
 
   render() {
-    const { array } = this.state;
+    const { array, windowWidth } = this.state;
     return (
-      <div className="container">
+      <div className="page-container">
         <div className="toolbar">
-          <button
-            type="button"
-            className="rounded-button"
-            onClick={() => {
-              this.resetArray();
-            }}
-          >
-            Reset Array
-          </button>
-          <button
-            type="button"
-            className="rounded-button"
-            onClick={() => {
-              this.playAnimation(getMergeSortAnimations);
-            }}
-          >
-            Merge Sort
-          </button>
-          <button
-            type="button"
-            className="rounded-button"
-            onClick={() => {
-              this.playAnimation(getQuickSortAnimations);
-            }}
-          >
-            Quick Sort
-          </button>
-          <button
-            type="button"
-            className="rounded-button"
-            onClick={() => {
-              this.playAnimation(getHeapSortAnimations);
-            }}
-          >
-            Heap Sort
-          </button>
-          <button
-            type="button"
-            className="rounded-button"
-            onClick={() => {
-              this.playAnimation(getBubbleSortAnimations);
-            }}
-          >
-            Bubble Sort
-          </button>
+          <ButtonGroup vertical={windowWidth < 400}>
+            <Button
+              onClick={() => {
+                this.resetArray();
+              }}
+            >
+              RESET
+            </Button>
+            <Button
+              variant="dark"
+              onClick={() => {
+                this.playAnimation(getMergeSortAnimations);
+              }}
+            >
+              MERGE SORT
+            </Button>
+            <Button
+              variant="dark"
+              onClick={() => {
+                this.playAnimation(getQuickSortAnimations);
+              }}
+            >
+              QUICK SORT
+            </Button>
+            <Button
+              variant="dark"
+              onClick={() => {
+                this.playAnimation(getHeapSortAnimations);
+              }}
+            >
+              HEAP SORT
+            </Button>
+            <Button
+              variant="dark"
+              onClick={() => {
+                this.playAnimation(getBubbleSortAnimations);
+              }}
+            >
+              BUBBLE SORT
+            </Button>
+
+            <DropdownButton
+              as={ButtonGroup}
+              title="ANIMATION SPEED"
+              id="bg-nested-dropdown"
+            >
+              <Dropdown.Item
+                onClick={() => {
+                  this.setState({
+                    numberOfArrayBars: 10,
+                    animationSpeedMS: 400,
+                  });
+                }}
+              >
+                SLOW
+              </Dropdown.Item>
+              <Dropdown.Item
+                onClick={() => {
+                  this.setState({
+                    numberOfArrayBars: windowWidth / 10,
+                    animationSpeedMS: 20,
+                  });
+                }}
+              >
+                FAST
+              </Dropdown.Item>
+            </DropdownButton>
+          </ButtonGroup>
         </div>
         <div className="array-container">
           {array.map((value, index) => (
@@ -143,7 +180,10 @@ export default class SortingVisualizer extends Component {
               // eslint-disable-next-line react/no-array-index-key
               key={index}
               id={`array-bar${index}`}
-              style={{ height: `${value}px` }}
+              style={{
+                height: `${value}px`,
+                width: `${(windowWidth * 0.4) / array.length}px`,
+              }}
             />
           ))}
         </div>

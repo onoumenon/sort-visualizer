@@ -1,0 +1,30 @@
+.page-container {
+  margin: auto;
+}
+
+.toolbar {
+  height: 20vh;
+  margin-top: 25px;
+
+  .btn-group-vertical {
+    z-index: 999;
+  }
+}
+
+.array-container {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  display: flex;
+  flex-flow: wrap-reverse;
+  justify-content: space-between;
+  .array-bar {
+    margin: 0 1px;
+    width: 3px;
+    background-color: #f7dcd0;
+  }
+
+  .--active {
+    background-color: #da7070;
+  }
+}
