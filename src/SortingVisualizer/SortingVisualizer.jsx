@@ -14,7 +14,7 @@ let TIMEOUTS = [];
 const DEFAULT_NO_OF_ARRAY_BARS = 10;
 // in MS
 const SLOWSPEED = 200;
-const FASTSPEED = 20;
+const FASTSPEED = 10;
 // in px
 const MOBILE_BREAKPOINT = 400;
 
@@ -63,7 +63,7 @@ export default class SortingVisualizer extends Component {
     const activeBars = document.getElementsByClassName('array-bar');
     if (activeBars.length) {
       for (let i = 0; i < activeBars.length; i++) {
-        activeBars[i].classList.remove('--active');
+        activeBars[i].classList.remove('--active', '--end');
       }
     }
     const array = [];
@@ -79,17 +79,16 @@ export default class SortingVisualizer extends Component {
     // track start and end of animation
     this.setState({ isAnimating: true });
     const animations = getAnimationFrames(array);
+    console.log(animations);
     animations.forEach((ele, i) => {
       const arrayBars = document.getElementsByClassName('array-bar');
-      const isColorChange = i % 3 !== 2;
-      if (isColorChange) {
-        // barOne and barTwo are values being compared
-        const [barOneIdx, barTwoIdx] = animations[i];
-
+      if (ele.id === 'colorChange') {
+        const { state } = ele;
         TIMEOUTS.push(
           setTimeout(() => {
-            arrayBars[barOneIdx].classList.toggle('--active');
-            arrayBars[barTwoIdx].classList.toggle('--active');
+            ele.data.forEach((barIndex) =>
+              arrayBars[barIndex].classList.toggle(`--${state}`)
+            );
           }, i * animationSpeedMS)
         );
       } else {
@@ -99,9 +98,11 @@ export default class SortingVisualizer extends Component {
               return;
             }
             animations[i].forEach((change) => {
-              const { index, newHeight } = change;
-              const barStyle = arrayBars[index].style;
-              barStyle.height = `${newHeight}px`;
+              const { index, newHeight, state } = change;
+              arrayBars[index].style.height = `${newHeight}px`;
+              if (state) {
+                arrayBars[index].classList.add(`--${state}`);
+              }
             });
           }, i * animationSpeedMS)
         );

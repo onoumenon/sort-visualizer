@@ -95,9 +95,16 @@ function bubbleSortHelper(array, animations) {
       } else {
         addAnimations(array, animations, i, i + 1);
       }
+      // display value at final position in another color
+      if (i === array.length - index - 2) {
+        animations.push({ id: 'colorChange', data: [i + 1], state: 'end' });
+      }
     }
     if (hasSwapped === false) {
       // end early if list is already sorted
+      for (let i = 0; i < array.length - index - 1; i++) {
+        animations.push({ id: 'colorChange', data: [i], state: 'end' });
+      }
       break;
     }
   }
@@ -206,20 +213,28 @@ function quickSortHelper(array, animations) {
 
 function addComparingAnimation(animations, a, b) {
   // first array is to indicate color change
-  animations.push([a, b]);
+  animations.push({ id: 'colorChange', data: [a, b], state: 'active' });
   // second array to indicate reverting to original color
-  animations.push([a, b]);
+  animations.push({ id: 'colorChange', data: [a, b], state: 'active' });
 }
 
 // add animation frames for compared value
-function addAnimations(arr, animations, a, b, isSwapping = false) {
+function addAnimations(
+  arr,
+  animations,
+  a,
+  b,
+  defaultSwap = false,
+  customSwapValue = []
+) {
   addComparingAnimation(animations, a, b);
-  if (isSwapping) {
+  // If no flags are passed in, an 'empty' animation frame is added
+  if (defaultSwap) {
     animations.push([
       { index: a, newHeight: arr[b] },
       { index: b, newHeight: arr[a] },
     ]);
   } else {
-    animations.push([]);
+    animations.push(customSwapValue);
   }
 }
